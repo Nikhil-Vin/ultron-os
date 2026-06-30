@@ -1,0 +1,9 @@
+{
+  "title": "Today",
+  "items": [
+    { "text": "Review overnight PRs on ultron-os", "done": false },
+    { "text": "Prep standup commit summary", "done": true },
+    { "text": "Update SETUP.md (deferred from yesterday)", "done": false },
+    { "text": "Pre-market watchlist levels", "done": false }
+  ]
+}

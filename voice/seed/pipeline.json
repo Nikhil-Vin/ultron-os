@@ -1,0 +1,9 @@
+{
+  "title": "Trade signals",
+  "stages": [
+    { "label": "Scanned", "value": 40, "atRisk": false },
+    { "label": "Setups", "value": 6, "atRisk": false },
+    { "label": "Checklist", "value": 3, "atRisk": false },
+    { "label": "Triggered", "value": 1, "atRisk": true }
+  ]
+}

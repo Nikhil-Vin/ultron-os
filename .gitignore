@@ -1,0 +1,42 @@
+# --- Secrets / env ---
+.env
+*.env.local
+*.pem
+*.key
+secrets/
+
+# --- Java / Maven ---
+target/
+*.class
+*.jar
+!**/.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.jar
+
+# --- Node / frontend ---
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Python (later phases) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+ai-layer/models/*
+!ai-layer/models/.gitkeep
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Logs / runtime ---
+*.log
+logs/

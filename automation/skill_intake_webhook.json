@@ -1,0 +1,33 @@
+{
+  "name": "Ultron — Skill Intake Webhook",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "ultron-skill", "options": {} },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.ULTRON_BACKEND }}/api/skills",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.body.name, content: $json.body.content, tags: $json.body.tags || 'webhook' }) }}",
+        "options": {}
+      },
+      "id": "intake",
+      "name": "Teach Ultron",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Teach Ultron", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {}
+}

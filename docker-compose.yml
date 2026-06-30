@@ -1,0 +1,156 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ultron-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ultron}
+      POSTGRES_USER: ${POSTGRES_USER:-ultron}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ultron}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ultron_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ultron} -d ${POSTGRES_DB:-ultron}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ultron-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ultron_ollama:/root/.ollama
+    profiles: ["llm"]   # optional: `docker compose --profile llm up -d`
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ultron-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ultron}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-ultron}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ultron}
+      ULTRON_AUTO_APPROVE: ${ULTRON_AUTO_APPROVE:-false}
+      ULTRON_BRAIN_OLLAMA_BASE_URL: http://ollama:11434
+      ULTRON_PYTHON_BRIDGE_ENABLED: ${ULTRON_PYTHON_BRIDGE_ENABLED:-false}
+      ULTRON_PYTHON_BRIDGE_URL: http://ai-layer:8000
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || curl -fsS http://localhost:8080/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    profiles: ["full"]  # optional: `docker compose --profile full up -d`
+
+  # --- LiveKit: real-time transport + shared data channel for voice ↔ HUD (Section 11.6) ---
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: ultron-livekit
+    restart: unless-stopped
+    command: --dev --bind 0.0.0.0
+    ports:
+      - "7880:7880"          # WebSocket / HTTP
+      - "7881:7881"          # TURN/TCP
+      - "7882:7882/udp"      # RTC/UDP
+    profiles: ["voice"]
+
+  # --- Python AI layer (FastAPI deep-learning services, Phase 1/2) ---
+  ai-layer:
+    build:
+      context: ./ai-layer
+      dockerfile: Dockerfile
+    container_name: ultron-ai-layer
+    restart: unless-stopped
+    environment:
+      ULTRON_BACKEND_URL: http://backend:8080
+    ports:
+      - "${AI_LAYER_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    profiles: ["ai", "full"]
+
+  # --- Voice agent (streaming STT→brain→TTS, publishes HUD render events) ---
+  # NOTE: microphone access from inside a container is platform-specific. On Windows/macOS the
+  # voice agent is best run on the HOST (python voice/agent.py); this service is provided for
+  # Linux hosts that map an audio device, or for a mic-less render-event publisher.
+  voice-agent:
+    build:
+      context: ./voice
+      dockerfile: Dockerfile
+    container_name: ultron-voice
+    restart: unless-stopped
+    depends_on:
+      - livekit
+      - backend
+    environment:
+      LIVEKIT_URL: ws://livekit:7880
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret}
+      ULTRON_BACKEND_URL: http://backend:8080
+      ULTRON_ROOM: ${ULTRON_ROOM:-ultron}
+    profiles: ["voice"]
+
+  # --- HUD (Next.js voice-synced dashboard) ---
+  hud:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: ultron-hud
+    restart: unless-stopped
+    depends_on:
+      - livekit
+    environment:
+      NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-ws://localhost:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret}
+      NEXT_PUBLIC_ULTRON_ROOM: ${ULTRON_ROOM:-ultron}
+    ports:
+      - "${HUD_PORT:-3000}:3000"
+    profiles: ["voice", "full"]
+
+  # --- Monitoring (Phase 5) ---
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ultron-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    profiles: ["monitoring", "full"]
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: ultron-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-ultron}
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - ultron_grafana:/var/lib/grafana
+    profiles: ["monitoring", "full"]
+
+volumes:
+  ultron_pgdata:
+  ultron_ollama:
+  ultron_grafana:

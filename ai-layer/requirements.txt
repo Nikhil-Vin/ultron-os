@@ -1,0 +1,36 @@
+# ===========================================================================
+# Ultron-OS ai-layer requirements.
+#
+# CORE (required) — the service runs fully offline with just these. All ML below
+# is OPTIONAL: each module degrades to a deterministic stdlib implementation when
+# its heavy dependency is absent, mirroring the Java backend's fail-safe design.
+# ===========================================================================
+fastapi==0.137.1
+uvicorn==0.34.0
+pydantic==2.10.4
+httpx==0.28.1
+
+# ---------------------------------------------------------------------------
+# OPTIONAL ML UPGRADES (install as needed; may require Python <= 3.12 for wheels)
+# ---------------------------------------------------------------------------
+# Embeddings / RAG
+# sentence-transformers==3.3.1
+# faiss-cpu==1.9.0
+# numpy==2.1.3
+#
+# Skill intake (document loaders)
+# PyMuPDF==1.25.1            # PDF
+# pdfplumber==0.11.4         # PDF (alt)
+# trafilatura==2.0.0         # web article extraction
+# EbookLib==0.18             # EPUB
+# yt-dlp==2024.12.13         # YouTube audio
+# faster-whisper==1.1.0      # speech-to-text
+#
+# Psychology / NLP / anomaly
+# textblob==0.18.0           # sentiment
+# scikit-learn==1.6.0        # IsolationForest, K-means
+# xgboost==2.1.3             # priority model
+# river==0.22.0              # online learning
+# prophet==1.1.6             # behaviour forecasting
+# spacy==3.8.3               # NER (then: python -m spacy download en_core_web_sm)
+# transformers==4.47.1       # abstractive summarization

@@ -1,0 +1,50 @@
+{
+  "name": "Ultron — Trading Alert → Notification",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 5 }] } },
+      "id": "tick",
+      "name": "Every 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": { "url": "={{ $vars.ULTRON_BACKEND }}/api/trading/signals", "options": {} },
+      "id": "signals",
+      "name": "Get Signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": { "options": { "caseSensitive": true },
+          "conditions": [
+            { "leftValue": "={{ $json.signalType }}", "rightValue": "HOLD", "operator": { "type": "string", "operation": "notEquals" } },
+            { "leftValue": "={{ $json.confidence }}", "rightValue": 0.6, "operator": { "type": "number", "operation": "gte" } }
+          ], "combinator": "and" }
+      },
+      "id": "filter",
+      "name": "Actionable Only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": { "channel": "#trading", "text": "=⚡ {{ $json.signalType }} {{ $json.instrument }} — conf {{ $json.confidence }}. {{ $json.reasoning }}" },
+      "id": "notify",
+      "name": "Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Every 5 min": { "main": [[{ "node": "Get Signals", "type": "main", "index": 0 }]] },
+    "Get Signals": { "main": [[{ "node": "Actionable Only", "type": "main", "index": 0 }]] },
+    "Actionable Only": { "main": [[{ "node": "Notify", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {}
+}
