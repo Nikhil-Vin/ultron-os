@@ -20,4 +20,21 @@ public interface Brain {
      * @return the generated text
      */
     String think(String prompt);
+
+    /**
+     * Stream a reply token-by-token. Default: produce the full reply via {@link #think(String)} and
+     * emit it as a single chunk. Streaming providers (Ollama, OpenAI-compatible, Anthropic, Gemini)
+     * override this for real-time token delivery.
+     *
+     * @param prompt  the input prompt
+     * @param onToken consumer invoked with each token/fragment as it arrives
+     * @return the full concatenated reply
+     */
+    default String streamThink(String prompt, java.util.function.Consumer<String> onToken) {
+        String answer = think(prompt);
+        if (answer != null && !answer.isBlank()) {
+            onToken.accept(answer);
+        }
+        return answer;
+    }
 }

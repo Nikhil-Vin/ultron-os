@@ -6,11 +6,21 @@ export default {
     extend: {
       colors: {
         ultron: {
-          bg: "#0a0e1a",
-          panel: "#111827",
-          accent: "#38bdf8",
+          bg: "#080808",
+          panel: "#0e0e0e",
+          accent: "#D4AF37",
+          gold: "#D4AF37",
+          obsidian: "#080808",
           danger: "#f87171",
         },
+      },
+      fontFamily: {
+        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        glow: "0 0 25px rgba(212,175,55,0.2)",
+        "glow-strong": "0 0 40px rgba(212,175,55,0.35)",
       },
     },
   },

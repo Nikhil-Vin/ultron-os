@@ -1,0 +1,39 @@
+# ===========================================================================
+# Ultron-OS voice agent — streaming conversational voice (Section 9.9).
+# All local + free by default. Cloud engines (ElevenLabs/Azure/Deepgram/Twilio)
+# are opt-in and NOT listed here — install them only if you enable those profiles.
+#
+#   python -m venv .venv && . .venv/Scripts/activate   (Windows)
+#   pip install -r requirements.txt
+# Then download models (see README.md): Piper voices + openWakeWord + whisper.
+# ===========================================================================
+
+# --- Real-time transport + agent framework ---
+livekit==0.18.2
+livekit-agents==0.12.11
+livekit-api==0.8.2
+
+# --- Speech-to-text (streaming, multilingual: en/hi/mr + 90 more) ---
+faster-whisper==1.1.0
+
+# --- Text-to-speech (local, CPU) ---
+piper-tts==1.2.0
+
+# --- Wake word ("Ultron") ---
+openwakeword==0.6.0
+
+# --- Voice activity detection (barge-in + end-of-turn) ---
+silero-vad==5.1.2
+webrtcvad==2.0.10
+
+# --- Speaker verification (voice biometric — owner only) ---
+resemblyzer==0.1.4
+
+# --- Audio I/O + processing ---
+sounddevice==0.5.1
+numpy==2.1.3
+scipy==1.14.1
+
+# --- Backend bridge (SSE streaming from /api/voice/ask) ---
+httpx==0.28.1
+httpx-sse==0.4.0

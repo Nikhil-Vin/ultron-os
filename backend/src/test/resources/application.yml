@@ -15,12 +15,16 @@ spring:
 
 ultron:
   auto-approve: false
+  seed:
+    enabled: false
   brain:
     ollama-enabled: false   # force HeuristicBrain in tests (no network)
   github:
     mode: fixture
   cors:
     allowed-origins: http://localhost:5173
+  python-bridge:
+    enabled: false
 
 logging:
   level:

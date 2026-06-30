@@ -1,15 +1,10 @@
-import { useEffect, useState } from "react";
-import { api, type BriefResponse, type Health } from "../../lib/api";
+import { useState } from "react";
+import { api, type BriefResponse } from "../../lib/api";
 
 export default function BriefView() {
-  const [health, setHealth] = useState<Health | null>(null);
   const [brief, setBrief] = useState<BriefResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.health().then(setHealth).catch((e) => setError(String(e)));
-  }, []);
 
   async function generate() {
     setLoading(true);
@@ -24,15 +19,7 @@ export default function BriefView() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-ultron-accent">Ultron-OS</h1>
-          <p className="text-sm text-gray-400">Morning Brief · Phase 0</p>
-        </div>
-        <StatusPill health={health} error={error} />
-      </header>
-
+    <div>
       <button
         onClick={generate}
         disabled={loading}
@@ -52,30 +39,6 @@ export default function BriefView() {
           {brief.brief}
         </pre>
       )}
-    </div>
-  );
-}
-
-function StatusPill({
-  health,
-  error,
-}: {
-  health: Health | null;
-  error: string | null;
-}) {
-  if (error && !health) {
-    return <span className="text-sm text-ultron-danger">offline</span>;
-  }
-  if (!health) {
-    return <span className="text-sm text-gray-500">connecting…</span>;
-  }
-  return (
-    <div className="text-right text-xs text-gray-400">
-      <div>
-        brain: <span className="text-ultron-accent">{health.brain}</span>
-      </div>
-      <div>github: {health.github}</div>
-      <div>auto-approve: {String(health.autoApprove)}</div>
     </div>
   );
 }

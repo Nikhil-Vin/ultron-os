@@ -10,8 +10,9 @@ import java.util.UUID;
 /**
  * A single unit of Ultron's growing memory (L4 — The Moat).
  *
- * <p>Phase 0 stores plain content + metadata and recalls by keyword. The vector embedding
- * column for semantic recall is added in V2 (Phase 1) alongside pgvector search.
+ * <p>Phase 0 stored plain content + metadata and recalled by keyword. Phase 1 adds the
+ * {@code embedding} column (a CSV-encoded dense vector) for semantic recall via the RAG layer;
+ * keyword recall remains as the fail-safe fallback.
  */
 @Entity
 @Table(name = "memories")
@@ -36,6 +37,10 @@ public class Memory {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    /** CSV-encoded dense embedding for semantic recall (RAG, L3). Nullable for legacy rows. */
+    @Column(name = "embedding", length = 100_000)
+    private String embedding;
 
     protected Memory() {
         // for JPA
@@ -72,5 +77,13 @@ public class Memory {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(String embedding) {
+        this.embedding = embedding;
     }
 }

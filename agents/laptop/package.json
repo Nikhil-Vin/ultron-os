@@ -1,0 +1,26 @@
+{
+  "name": "ultron-laptop-agent",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Ultron laptop device agent — mTLS daemon that executes ONLY approved, manifest-allowed actions.",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/agent.js",
+    "dev": "tsx agent.ts"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0",
+    "chokidar": "^4.0.1",
+    "screenshot-desktop": "^1.15.0",
+    "tesseract.js": "^5.1.1",
+    "systeminformation": "^5.23.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.0",
+    "@types/ws": "^8.5.12",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3"
+  }
+}

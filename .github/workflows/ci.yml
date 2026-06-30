@@ -59,3 +59,28 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-check:
+    name: OWASP dependency-check (CVE scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: ultron-os
+          path: .
+          format: HTML
+          # Fail the build on a high-severity CVE (CVSS >= 7).
+          args: >-
+            --failOnCVSS 7
+            --enableExperimental
+            --scan backend
+            --scan ai-layer
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: ${{ github.workspace }}/reports
+

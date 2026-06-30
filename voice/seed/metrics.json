@@ -1,0 +1,13 @@
+{
+  "title": "P&L (7d)",
+  "unit": "₹",
+  "series": [
+    { "label": "Mon", "value": 1200 },
+    { "label": "Tue", "value": -300 },
+    { "label": "Wed", "value": 800 },
+    { "label": "Thu", "value": 1500 },
+    { "label": "Fri", "value": -200 },
+    { "label": "Sat", "value": 600 },
+    { "label": "Sun", "value": 950 }
+  ]
+}

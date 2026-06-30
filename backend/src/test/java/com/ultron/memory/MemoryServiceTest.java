@@ -6,6 +6,9 @@ import com.ultron.config.UltronProperties;
 import com.ultron.governance.ApprovalGate;
 import com.ultron.governance.AuditEntryRepository;
 import com.ultron.governance.AuditLog;
+import com.ultron.intelligence.embedding.EmbedderSelector;
+import com.ultron.intelligence.embedding.HeuristicEmbedder;
+import com.ultron.intelligence.embedding.OllamaEmbedder;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,9 +33,11 @@ class MemoryServiceTest {
     @BeforeEach
     void setUp() {
         UltronProperties properties = new UltronProperties(); // auto-approve = false
+        properties.getBrain().setOllamaEnabled(false);        // offline embedder, no network
         AuditLog auditLog = new AuditLog(auditEntryRepository);
         ApprovalGate gate = new ApprovalGate(properties, auditLog);
-        memoryService = new MemoryService(memoryRepository, gate);
+        EmbedderSelector embedder = new EmbedderSelector(new OllamaEmbedder(properties), new HeuristicEmbedder());
+        memoryService = new MemoryService(memoryRepository, gate, embedder);
     }
 
     @Test
