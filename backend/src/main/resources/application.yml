@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: ultron-os
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ultron}
+    username: ${SPRING_DATASOURCE_USERNAME:ultron}
+    password: ${SPRING_DATASOURCE_PASSWORD:ultron}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+server:
+  port: ${BACKEND_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# --- Ultron domain configuration (bound to UltronProperties) ---
+ultron:
+  # Section 14 governance default — human-in-the-loop, NEVER auto-approve by default.
+  auto-approve: ${ULTRON_AUTO_APPROVE:false}
+  brain:
+    # OllamaBrain is used only if this server is reachable; otherwise HeuristicBrain.
+    ollama-base-url: ${ULTRON_BRAIN_OLLAMA_BASE_URL:http://localhost:11434}
+    ollama-model: ${ULTRON_BRAIN_OLLAMA_MODEL:llama3.1}
+    ollama-enabled: ${ULTRON_BRAIN_OLLAMA_ENABLED:true}
+  github:
+    # 'fixture' (offline, bundled sample) or 'rest' (opt-in, needs token).
+    mode: ${ULTRON_GITHUB_MODE:fixture}
+    token: ${GITHUB_TOKEN:}
+  cors:
+    allowed-origins: ${ULTRON_CORS_ORIGINS:http://localhost:5173}
+
+logging:
+  level:
+    com.ultron: INFO

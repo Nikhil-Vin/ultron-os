@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-06-29T23:30:00Z",
+  "owner": "Nikhil-Vin",
+  "repositories": [
+    {
+      "name": "ultron-os",
+      "openPullRequests": [
+        {
+          "number": 42,
+          "title": "feat(intelligence): wire SkillAwareRetriever boosting",
+          "author": "Nikhil-Vin",
+          "updatedAt": "2026-06-29T21:14:00Z",
+          "reviewState": "CHANGES_REQUESTED"
+        },
+        {
+          "number": 43,
+          "title": "chore(ci): add gitleaks secret scan",
+          "author": "Nikhil-Vin",
+          "updatedAt": "2026-06-29T22:02:00Z",
+          "reviewState": "APPROVED"
+        }
+      ],
+      "recentCommits": [
+        {
+          "sha": "a1b2c3d",
+          "message": "docs: expand SKILL_INTAKE pipeline diagram",
+          "author": "Nikhil-Vin",
+          "committedAt": "2026-06-29T20:40:00Z"
+        },
+        {
+          "sha": "e4f5g6h",
+          "message": "test(memory): add keyword recall coverage",
+          "author": "Nikhil-Vin",
+          "committedAt": "2026-06-29T19:05:00Z"
+        }
+      ],
+      "openIssues": [
+        {
+          "number": 17,
+          "title": "pgvector index tuning for >100k chunks",
+          "labels": ["memory", "performance"],
+          "updatedAt": "2026-06-29T18:20:00Z"
+        }
+      ]
+    }
+  ]
+}

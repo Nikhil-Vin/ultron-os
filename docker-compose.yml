@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ultron-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ultron}
+      POSTGRES_USER: ${POSTGRES_USER:-ultron}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ultron}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ultron_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ultron} -d ${POSTGRES_DB:-ultron}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ultron-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ultron_ollama:/root/.ollama
+    profiles: ["llm"]   # optional: `docker compose --profile llm up -d`
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ultron-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ultron}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-ultron}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ultron}
+      ULTRON_AUTO_APPROVE: ${ULTRON_AUTO_APPROVE:-false}
+      ULTRON_BRAIN_OLLAMA_BASE_URL: http://ollama:11434
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    profiles: ["full"]  # optional: `docker compose --profile full up -d`
+
+volumes:
+  ultron_pgdata:
+  ultron_ollama:
