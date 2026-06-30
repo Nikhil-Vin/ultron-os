@@ -192,5 +192,5 @@ export default function NeuralSphere({
     };
   }, []);
 
-  return <div ref={ref} className="absolute inset-0" />;
+  return <div ref={ref} className="absolute inset-0 z-0 pointer-events-none" />;
 }
