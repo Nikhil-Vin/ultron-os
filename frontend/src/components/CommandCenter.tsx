@@ -85,10 +85,10 @@ export default function CommandCenter() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black text-[#cfe9ff]">
-      <NeuralSphere mode={mode} thinking={thinking} />
+      {tab === "core" && <NeuralSphere mode={mode} thinking={thinking} />}
 
       {/* ===== HEADER ===== */}
-      <header className="absolute inset-x-0 top-0 z-30 flex items-center justify-between gap-3 border-b border-[#00e5ff]/15 bg-black/55 px-4 py-2 backdrop-blur">
+      <header className="absolute inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-[#00e5ff]/25 bg-black/90 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-3">
           <span className="text-xl txt-glow" style={{ color: accent }}>◆</span>
           <div>
@@ -126,7 +126,7 @@ export default function CommandCenter() {
       </header>
 
       {/* ===== LEFT PANEL ===== */}
-      <aside className="absolute left-3 top-16 z-20 flex w-[230px] flex-col gap-3">
+      <aside className={"absolute left-3 top-16 z-20 flex w-[230px] flex-col gap-3 " + (tab === "core" ? "" : "hidden")}>
         <Panel title="SYSTEM VITALS" accent={accent}>
           <Bar label="CPU" v={sys?.cpuPercent ?? 0} accent={accent} />
           <Bar label="HEAP" v={sys?.heapPercent ?? 0} accent={accent} />
@@ -150,7 +150,7 @@ export default function CommandCenter() {
       </aside>
 
       {/* ===== RIGHT PANEL ===== */}
-      <aside className="absolute right-3 top-16 z-20 flex w-[260px] flex-col gap-3">
+      <aside className={"absolute right-3 top-16 z-20 flex w-[260px] flex-col gap-3 " + (tab === "core" ? "" : "hidden")}>
         <Panel title="TRADING SIGNALS" accent={accent}>
           <div className="max-h-[24vh] space-y-1 overflow-y-auto">
             {signals.length === 0 && <div className="font-mono text-[10px] text-[#5f8fae]">no signals yet</div>}
@@ -179,11 +179,11 @@ export default function CommandCenter() {
         </Panel>
       </aside>
 
-      {/* ===== CENTER FEATURE OVERLAY (non-core tabs) ===== */}
+      {/* ===== FEATURE VIEW as primary content (non-core tabs) ===== */}
       {tab !== "core" && (
-        <div className="absolute left-1/2 top-20 z-20 w-[min(680px,60vw)] -translate-x-1/2">
-          <div className="glass glass-corner relative max-h-[64vh] overflow-y-auto p-5">
-            <button onClick={() => setTab("core")} className="absolute right-3 top-3 font-mono text-[#00e5ff]/60 hover:text-[#00e5ff]">✕</button>
+        <main className="absolute inset-x-0 bottom-0 top-[52px] z-20 overflow-y-auto bg-black/80 px-6 py-6 backdrop-blur">
+          <div className="mx-auto max-w-4xl">
+            <button onClick={() => setTab("core")} className="mb-4 font-mono text-[11px] tracking-widest text-[#00e5ff]/70 hover:text-[#00e5ff]">← BACK TO CORE</button>
             {tab === "brief" && <BriefView />}
             {tab === "agent" && <AgentView />}
             {tab === "skills" && <SkillsView />}
@@ -192,7 +192,7 @@ export default function CommandCenter() {
             {tab === "devices" && <DevicesView />}
             {tab === "code" && <CodeView />}
           </div>
-        </div>
+        </main>
       )}
 
       {/* ===== VOICE CONSOLE (always) ===== */}
