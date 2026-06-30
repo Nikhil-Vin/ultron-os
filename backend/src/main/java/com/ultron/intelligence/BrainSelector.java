@@ -33,6 +33,12 @@ public class BrainSelector {
     @Autowired(required = false)
     private com.ultron.intelligence.language.LanguagePreference languagePreference;
 
+    @Autowired(required = false)
+    private com.ultron.intelligence.language.LanguageDetector languageDetector;
+
+    @Autowired(required = false)
+    private ConversationMemory conversation;
+
     /** Owner-pinned provider, or null for automatic priority. */
     private volatile String pinned = null;
 
@@ -90,9 +96,18 @@ public class BrainSelector {
         return heuristicBrain;
     }
 
+    /** Per-input language: auto-detected wins; else the pinned preference; else English. */
+    private String languageDirective(String prompt) {
+        String detected = languageDetector != null ? languageDetector.detect(prompt) : "en";
+        String lang = !"en".equals(detected) ? detected
+            : (languagePreference != null ? languagePreference.getCode() : "en");
+        return com.ultron.intelligence.language.LanguagePreference.directiveFor(lang);
+    }
+
     /** Reason via the active brain, falling back to the heuristic on a blank live answer. */
     public String think(String prompt) {
-        String p = languagePreference == null ? prompt : languagePreference.applyTo(prompt);
+        String dir = languageDirective(prompt);
+        String p = dir.isEmpty() ? prompt : dir + "\n\n" + prompt;
         Brain brain = active();
         String answer = brain.think(p);
         if ((answer == null || answer.isBlank()) && brain != heuristicBrain) {
@@ -103,20 +118,39 @@ public class BrainSelector {
 
     /** Stream tokens via the active brain (Ollama + all cloud brains stream natively). */
     public String streamThink(String prompt, Consumer<String> onToken) {
-        String p = languagePreference == null ? prompt : languagePreference.applyTo(prompt);
+        String dir = languageDirective(prompt);
+        String convo = conversation != null ? conversation.context() : "";
+        StringBuilder pb = new StringBuilder();
+        if (!dir.isEmpty()) pb.append(dir).append("\n\n");
+        if (!convo.isEmpty()) pb.append(convo).append("\n");
+        pb.append(prompt == null ? "" : prompt);
+        String p = pb.toString();
+
         Brain brain = active();
+        String result;
         if (brain == heuristicBrain) {
-            String a = heuristicBrain.think(p);
-            if (a != null && !a.isBlank()) onToken.accept(a);
-            return a;
+            result = heuristicBrain.think(p);
+            if (result != null && !result.isBlank()) onToken.accept(result);
+        } else {
+            String streamed = brain.streamThink(p, onToken);
+            if (streamed == null || streamed.isBlank()) {
+                result = heuristicBrain.think(p);
+                if (result != null && !result.isBlank()) onToken.accept(result);
+            } else {
+                result = streamed;
+            }
         }
-        String streamed = brain.streamThink(p, onToken);
-        if (streamed == null || streamed.isBlank()) {
-            String h = heuristicBrain.think(p);
-            if (h != null && !h.isBlank()) onToken.accept(h);
-            return h;
+        if (conversation != null) {
+            conversation.record(lastQuestion(prompt), result);
         }
-        return streamed;
+        return result;
+    }
+
+    /** Extract the owner's question from a built prompt (the trailing "Question:" line if present). */
+    private static String lastQuestion(String prompt) {
+        if (prompt == null) return "";
+        int i = prompt.lastIndexOf("Question:");
+        return i >= 0 ? prompt.substring(i + 9).strip() : prompt.strip();
     }
 
     /** Health-facing status (no secrets). */

@@ -23,18 +23,28 @@ public class LanguagePreference {
 
     /** A strong response-language directive to prepend to a prompt, or empty for English. */
     public String instruction() {
-        return switch (code) {
-            case "hi" -> "Respond in Hindi (हिन्दी). Use Devanagari script. Match the user's language "
-                + "naturally — if they mix Hindi and English, you can too.";
-            case "mr" -> "Respond in Marathi (मराठी). Use Devanagari script. Match natural Marathi "
-                + "conversation style.";
+        return directiveFor(code);
+    }
+
+    /** Directive for a specific language code (used for per-input auto-detection). */
+    public static String directiveFor(String code) {
+        return switch (code == null ? "en" : code.toLowerCase()) {
+            case "hi" -> "तू Ultron है। हिंदी में naturally बात कर — Hinglish भी चलेगा। English में सोचकर "
+                + "translate मत कर, सीधे हिंदी में सोच और बोल। छोटा, तीखा, दोस्त जैसा।";
+            case "mr" -> "तू Ultron आहेस। मराठीत naturally बोल — मित्रासारखा, textbook सारखा नाही। "
+                + "इंग्रजीतून भाषांतर करू नकोस, थेट मराठीत विचार कर आणि बोल।";
             default -> "";
         };
     }
 
     /** Prepend the directive to a prompt (no-op for English). */
     public String applyTo(String prompt) {
-        String dir = instruction();
+        return applyToCode(prompt, code);
+    }
+
+    /** Prepend the directive for an explicit code (per-input). */
+    public static String applyToCode(String prompt, String code) {
+        String dir = directiveFor(code);
         if (dir.isEmpty()) {
             return prompt;
         }
