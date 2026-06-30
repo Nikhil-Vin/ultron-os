@@ -345,6 +345,14 @@ export const api = {
       body: JSON.stringify({ text, approved, similarity }),
     }).then((r) => json(r));
   },
+
+  codeGenerate(prompt: string, projectName: string, language: string): Promise<{ projectDir: string; files: string[]; notes: string | null }> {
+    return fetch(`${BASE}/api/code/generate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt, projectName, language }),
+    }).then((r) => json(r));
+  },
 };
 
 export interface TradingSignalDto {
