@@ -195,8 +195,8 @@ export default function CommandCenter() {
         </main>
       )}
 
-      {/* ===== VOICE CONSOLE (always) ===== */}
-      <VoiceConsole onState={(s) => setThinking(s === "processing" || s === "speaking")} />
+      {/* ===== VOICE CONSOLE (Core tab only) ===== */}
+      {tab === "core" && <VoiceConsole onState={(s) => setThinking(s === "processing" || s === "speaking")} />}
 
       {/* ===== FEED SLIDE-OVER ===== */}
       <FeedPanel open={feedOpen} onClose={() => setFeedOpen(false)} />

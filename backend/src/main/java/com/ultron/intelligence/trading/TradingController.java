@@ -84,6 +84,19 @@ public class TradingController {
         return signalRepo.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 50));
     }
 
+    /** Generate + persist a fresh signal from an indicator snapshot (BUY/SELL/HOLD + confidence). */
+    @PostMapping("/signals/generate")
+    public TradingSignal generateSignal(@RequestBody SignalRequest req) {
+        return signalGenerator.generate(req.instrument(),
+            req.indicators() == null ? Map.of() : req.indicators());
+    }
+
+    /** Trade journal entries (alias of the journal's trade list). */
+    @GetMapping("/trades")
+    public List<Trade> trades() {
+        return journal.recent(50);
+    }
+
     @PostMapping("/risk")
     public RiskCalculator.Sizing risk(@RequestBody RiskRequest req) {
         return riskCalculator.recommend(req.accountValue(), req.riskFraction(), req.entry(), req.stop(), req.target());

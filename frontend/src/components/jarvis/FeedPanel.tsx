@@ -83,6 +83,14 @@ export default function FeedPanel({ open, onClose }: { open: boolean; onClose: (
             className="mb-2 w-full rounded border border-[#00e5ff]/25 bg-black/50 p-2 font-mono text-[12px] text-[#bfefff] outline-none focus:border-[#00e5ff]" />
         )}
 
+        {mode === "source" && (
+          <div className="mb-2 rounded border border-[#ffb300]/30 bg-[#ffb300]/5 p-2 font-mono text-[9px] leading-relaxed text-[#ffd479]">
+            PDF / YouTube / webpage extraction needs the ai-layer running. Start it:
+            <code className="mt-1 block select-all text-[#fff0c2]">cd ai-layer &amp;&amp; pip install -r requirements.txt &amp;&amp; python main.py</code>
+            Without it, the source is stored as a reference only.
+          </div>
+        )}
+
         <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="tags (comma-separated)"
           className="mb-2 w-full rounded border border-[#00e5ff]/25 bg-black/50 p-2 font-mono text-[12px] text-[#bfefff] outline-none focus:border-[#00e5ff]" />
 

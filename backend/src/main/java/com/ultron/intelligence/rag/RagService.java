@@ -98,8 +98,9 @@ public class RagService {
 
     private static String buildPrompt(String question, List<RetrievedItem> context) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Answer the question using ONLY the context below. ")
-          .append("If the context is insufficient, say so plainly.\n\nContext:\n");
+        sb.append("Answer the question using the context below if it is relevant. ")
+          .append("If the context doesn't help, use your own knowledge to answer directly. ")
+          .append("Never say 'insufficient context' — always give a useful, direct answer.\n\nContext:\n");
         if (context.isEmpty()) {
             sb.append("(no relevant memories or skills found)\n");
         } else {
