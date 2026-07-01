@@ -203,6 +203,50 @@ export const api = {
     }).then((r) => json<AgentTrace>(r));
   },
 
+  /** Stream agent execution with real-time token updates */
+  async *streamAgent(instruction: string): AsyncGenerator<{ type: string; data: any }> {
+    const res = await fetch(`${BASE}/api/agent`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "Accept": "text/event-stream" },
+      body: JSON.stringify({ instruction, stream: true }),
+    });
+    if (!res.ok || !res.body) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const parts = line.split("\n");
+        let event = "message";
+        let data = "";
+        
+        for (const part of parts) {
+          if (part.startsWith("event:")) event = part.slice(6).trim();
+          else if (part.startsWith("data:")) data += part.slice(5).trim();
+        }
+        
+        if (data) {
+          try {
+            yield { type: event, data: JSON.parse(data) };
+          } catch {
+            yield { type: event, data };
+          }
+        }
+      }
+    }
+  },
+
   approveAgent(instruction: string): Promise<AgentTrace> {
     return fetch(`${BASE}/api/agent/approve`, {
       method: "POST",

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api, type Health, type MemoryDto, type SkillDto, type TradingSignalDto } from "../lib/api";
 import NeuralSphere from "./jarvis/NeuralSphere";
 import VoiceConsole from "./jarvis/VoiceConsole";
@@ -14,23 +14,14 @@ import CodeView from "../features/code/CodeView";
 const TABS = ["core", "brief", "agent", "skills", "trading", "memory", "devices", "code"] as const;
 type Tab = (typeof TABS)[number];
 
-const BOOT = [
-  "BOOTING ULTRON CORE v4.2 ...",
-  "SPEECH AND AUDIO SYNTACTIC CORE ... ONLINE",
-  "HIGH-FREQUENCY NLP TOKENIZER ... READY",
-  "MULTIMODAL CONTEXT STREAM ... ACTIVE",
-  "MEMORY MATRIX (pgvector) ... OK",
-  "GOVERNANCE GATE (human-in-the-loop) ... SECURE",
-];
-
 export default function CommandCenter() {
   const [tab, setTab] = useState<Tab>("core");
   const [mode, setMode] = useState<"default" | "trading" | "research">("default");
   const [thinking, setThinking] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
   const [clock, setClock] = useState("");
-  const [boot, setBoot] = useState<string[]>([]);
-  const bootI = useRef(0);
+  const [bootLog, setBootLog] = useState<string[]>(["BOOTING ULTRON CORE v4.2 ..."]);
+  const [bootComplete, setBootComplete] = useState(false);
 
   const [health, setHealth] = useState<Health | null>(null);
   const [sys, setSys] = useState<any>(null);
@@ -46,20 +37,68 @@ export default function CommandCenter() {
   }, [tab]);
 
   useEffect(() => {
-    const b = setInterval(() => {
-      if (bootI.current >= BOOT.length) { clearInterval(b); return; }
-      setBoot((p) => [...p, BOOT[bootI.current++]]);
-    }, 450);
+    async function bootSequence() {
+      const services = [
+        { name: "BACKEND (Spring Boot)", check: async () => {
+          try {
+            await api.health();
+            return true;
+          } catch {
+            return false;
+          }
+        }},
+        { name: "MEMORY MATRIX (pgvector)", check: async () => {
+          try {
+            await api.systemStats();
+            return true;
+          } catch {
+            return false;
+          }
+        }},
+        { name: "BRAIN (LLM)", check: async () => {
+          try {
+            const h = await api.health();
+            return h.llmActive === true;
+          } catch {
+            return false;
+          }
+        }},
+        { name: "EMBEDDER (vector engine)", check: async () => {
+          try {
+            const h = await api.health();
+            return h.embedder === "ollama" || h.embedder === "heuristic";
+          } catch {
+            return false;
+          }
+        }},
+        { name: "GOVERNANCE GATE (human-in-the-loop)", check: async () => true }, // Always ready
+      ];
+
+      for (const svc of services) {
+        const status = await svc.check();
+        const msg = `${svc.name} ... ${status ? "✓ ONLINE" : "✗ OFFLINE"}`;
+        setBootLog(prev => [...prev, msg]);
+        await new Promise(r => setTimeout(r, 300));
+      }
+      
+      setBootLog(prev => [...prev, "ULTRON CORE READY"]);
+      setBootComplete(true);
+    }
+
+    bootSequence();
+
     const c = setInterval(() => {
       const n = new Date();
       setClock([n.getHours(), n.getMinutes(), n.getSeconds()].map((x) => String(x).padStart(2, "0")).join(":"));
     }, 1000);
-    return () => { clearInterval(b); clearInterval(c); };
+    return () => { clearInterval(c); };
   }, []);
 
   useEffect(() => {
     let alive = true;
-    async function load() {
+    
+    // Initial load
+    async function loadAll() {
       const [h, sysData, mem, sk, sig, dv, bp] = await Promise.all([
         api.health().catch(() => null),
         api.systemStats().catch(() => null),
@@ -74,10 +113,60 @@ export default function CommandCenter() {
       setSignals(sig); setDevices(dv);
       if (bp) { setProviders(bp.providers); setPinned(bp.pinned); }
     }
-    load();
-    const id = setInterval(load, 8000);
-    return () => { alive = false; clearInterval(id); };
+    
+    loadAll();
+    
+    // Separate polling intervals per requirement:
+    // - System stats every 5s (CPU/memory/uptime)
+    // - Devices every 10s (connection status)
+    // - Health every 30s (providers/workers)
+    // - Data (memories/skills/signals) every 15s
+    
+    const systemInterval = setInterval(() => {
+      if (!alive) return;
+      api.systemStats().then(setSys).catch(() => {});
+    }, 5000);
+    
+    const devicesInterval = setInterval(() => {
+      if (!alive) return;
+      api.devices().then(setDevices).catch(() => {});
+    }, 10000);
+    
+    const healthInterval = setInterval(() => {
+      if (!alive) return;
+      Promise.all([
+        api.health().then(setHealth).catch(() => {}),
+        api.brainProviders().then(bp => {
+          if (bp) { setProviders(bp.providers); setPinned(bp.pinned); }
+        }).catch(() => {}),
+      ]);
+    }, 30000);
+    
+    const dataInterval = setInterval(() => {
+      if (!alive) return;
+      Promise.all([
+        api.recall("").then(setMemories).catch(() => {}),
+        api.listSkills().then(setSkills).catch(() => {}),
+        api.tradingSignals().then(setSignals).catch(() => {}),
+      ]);
+    }, 15000);
+    
+    return () => { 
+      alive = false; 
+      clearInterval(systemInterval);
+      clearInterval(devicesInterval);
+      clearInterval(healthInterval);
+      clearInterval(dataInterval);
+    };
   }, []);
+
+  // Force reload data when agent creates memory
+  function refreshData() {
+    Promise.all([
+      api.systemStats().then(setSys).catch(() => {}),
+      api.recall("").then(setMemories).catch(() => {}),
+    ]);
+  }
 
   const accent = mode === "trading" ? "#ffb300" : mode === "research" ? "#9b5cff" : "#00e5ff";
   const devOnline = devices.filter((d) => d.online).length;
@@ -85,7 +174,7 @@ export default function CommandCenter() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black text-[#cfe9ff]">
-      {tab === "core" && <NeuralSphere mode={mode} thinking={thinking} />}
+      {tab === "core" && <NeuralSphere mode={mode} thinking={thinking} memoryCount={sys?.memories ?? memories.length} />}
 
       {/* ===== HEADER ===== */}
       <header className="absolute inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-[#00e5ff]/25 bg-black/90 px-4 py-2 backdrop-blur">
@@ -173,8 +262,8 @@ export default function CommandCenter() {
         </Panel>
         <Panel title="BOOT LOG" accent={accent}>
           <div className="font-mono text-[9px] leading-relaxed text-[#8fd9ff]">
-            {boot.map((l, i) => <div key={i}><span className="opacity-40">›</span> {l}</div>)}
-            {boot.length >= BOOT.length && <div className="blink" style={{ color: accent }}>█ READY</div>}
+            {bootLog.map((l, i) => <div key={i}><span className="opacity-40">›</span> {l}</div>)}
+            {bootComplete && <div className="blink" style={{ color: accent }}>█ READY</div>}
           </div>
         </Panel>
       </aside>
@@ -185,7 +274,7 @@ export default function CommandCenter() {
           <div className="mx-auto max-w-4xl">
             <button onClick={() => setTab("core")} className="mb-4 font-mono text-[11px] tracking-widest text-[#00e5ff]/70 hover:text-[#00e5ff]">← BACK TO CORE</button>
             {tab === "brief" && <BriefView />}
-            {tab === "agent" && <AgentView />}
+            {tab === "agent" && <AgentView onMemoryChange={refreshData} />}
             {tab === "skills" && <SkillsView />}
             {tab === "trading" && <TradingDashboard />}
             {tab === "memory" && <MemoryView />}

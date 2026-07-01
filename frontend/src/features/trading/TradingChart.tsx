@@ -39,6 +39,35 @@ export default function TradingChart({ instrument }: { instrument: string }) {
           {data[data.length - 1].toFixed(2)}
         </span>
       </div>
+      
+      {/* Prominent synthetic data warning */}
+      <div className="mb-3 rounded border border-amber-500/30 bg-amber-950/20 px-3 py-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-amber-500">⚠</span>
+            <span className="font-mono text-xs text-amber-200">SYNTHETIC DATA</span>
+          </div>
+          <button
+            onClick={() => {
+              alert(
+                "To connect live broker data:\n\n" +
+                "1. Set ZERODHA_API_KEY + ZERODHA_API_SECRET in backend .env\n" +
+                "2. Or set ALPACA_API_KEY + ALPACA_API_SECRET\n" +
+                "3. Restart backend: cd backend && ./mvnw spring-boot:run\n" +
+                "4. Live quotes will replace synthetic data\n\n" +
+                "See docs/TRADING.md for full setup instructions"
+              );
+            }}
+            className="rounded border border-ultron-accent/40 bg-ultron-accent/10 px-2 py-1 font-mono text-[10px] tracking-wider text-ultron-accent hover:bg-ultron-accent hover:text-black transition-colors"
+          >
+            CONNECT BROKER
+          </button>
+        </div>
+        <p className="mt-1 text-[10px] text-amber-200/70">
+          Chart shows simulated price movement. Connect a broker API for real-time market data.
+        </p>
+      </div>
+
       <svg viewBox={`0 0 ${w} ${h}`} className="h-40 w-full">
         <polyline
           fill="none"
@@ -47,7 +76,6 @@ export default function TradingChart({ instrument }: { instrument: string }) {
           points={pts}
         />
       </svg>
-      <p className="mt-1 text-xs text-gray-500">synthetic feed · wire a broker quote for live data</p>
     </div>
   );
 }

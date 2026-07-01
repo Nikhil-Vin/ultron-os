@@ -3,6 +3,7 @@ import TradingChart from "./TradingChart";
 import SignalFeed from "./SignalFeed";
 import TradeLog from "./TradeLog";
 import PsychDashboard from "./PsychDashboard";
+import PreTradeChecklist from "./PreTradeChecklist";
 
 const WATCHLIST = ["NIFTY50", "RELIANCE", "BTCUSD", "AAPL"];
 
@@ -33,8 +34,9 @@ export default function TradingDashboard() {
 
       <TradingChart instrument={instrument} />
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SignalFeed instrument={instrument} />
+        <PreTradeChecklist instrument={instrument} />
         <PsychDashboard />
       </div>
 

@@ -26,22 +26,27 @@ const MODE_COLOR: Record<string, number> = {
 };
 
 /**
- * The living neural network sphere. Hundreds of glowing particles on a sphere, faint connection
- * lines between near neighbours, and orbital rings at different speeds. Reacts to the mouse and to
- * `mode` (colour) + `thinking` (faster swirl, brighter). Raw Three.js via CDN — no npm 3D deps.
+ * The living neural network sphere. Each particle represents a stored memory — the count comes from
+ * real /api/system data, not a random number. Faint connection lines between near neighbours, and
+ * orbital rings at different speeds. Reacts to the mouse and to `mode` (colour) + `thinking`
+ * (faster swirl, brighter). Raw Three.js via CDN — no npm 3D deps.
  */
 export default function NeuralSphere({
   mode = "default",
   thinking = false,
+  memoryCount = 100,
 }: {
   mode?: string;
   thinking?: boolean;
+  memoryCount?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const modeRef = useRef(mode);
   const thinkRef = useRef(thinking);
+  const memCountRef = useRef(memoryCount);
   modeRef.current = mode;
   thinkRef.current = thinking;
+  memCountRef.current = memoryCount;
 
   useEffect(() => {
     let raf = 0;
@@ -66,8 +71,8 @@ export default function NeuralSphere({
       const group = new THREE.Group();
       scene.add(group);
 
-      // --- particles on a sphere ---
-      const N = 700;
+      // --- particles on a sphere: each particle = one memory ---
+      const N = Math.max(memoryCount, 50); // minimum 50 for visual baseline
       const radius = 3.2;
       const positions = new Float32Array(N * 3);
       const original = new Float32Array(N * 3);
